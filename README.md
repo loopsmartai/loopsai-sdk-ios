@@ -74,7 +74,7 @@ LoopsAIChat.present(from: self, config: config)
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `agentId` | `String` | — | Your Loops AI agent identifier (required). |
-| `environment` | `LoopsEnvironment` | `.production` | `.production`, `.test`, or `.custom(URL)`. |
+| `environment` | `LoopsEnvironment` | `.production` | `.production` or `.custom(URL)`. |
 | `initialContext` | `LoopsAIChatContext?` | `nil` | Product / user context at launch. |
 | `features` | `LoopsFeatureFlags` | `.default` | Per-launch flow-mode overrides. |
 | `analytics` | `LoopsAnalyticsConfig` | `.default` | Sink + customer analytics destinations. |
@@ -87,7 +87,6 @@ LoopsAIChat.present(from: self, config: config)
 
 ```swift
 LoopsAIChatConfig(agentId: "…", environment: .production)
-LoopsAIChatConfig(agentId: "…", environment: .test)
 LoopsAIChatConfig(agentId: "…", environment: .custom(URL(string: "https://chat.acme.com")!))
 ```
 

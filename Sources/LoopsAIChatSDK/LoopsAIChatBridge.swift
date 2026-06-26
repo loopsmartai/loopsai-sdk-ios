@@ -17,8 +17,7 @@ final class LoopsAIChatBridge: NSObject, WKScriptMessageHandler {
 
     /// Hosts allowed to drive the bridge. The VC injects the custom `baseURL` host.
     var allowedHosts: Set<String> = [
-        "chat.loopsai.com",
-        "test-webchat.loopsai.com"
+        "chat.loopsai.com"
     ]
 
     // MARK: - Inbound (web → native)
