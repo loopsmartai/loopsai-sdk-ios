@@ -55,13 +55,6 @@ final class LoopsAIChatConfigTests: XCTestCase {
         XCTAssertTrue(LoopsAIChatConfig(agentId: "agent_123", startFresh: true).startFresh)
     }
 
-    func testTestEnvironmentBaseURL() {
-        let config = LoopsAIChatConfig(agentId: "agent_123", environment: .test)
-        XCTAssertEqual(config.baseHost, "test-webchat.loopsai.com")
-        XCTAssertTrue(config.chatURL(anonUserId: nil, conversationId: nil)
-            .absoluteString.contains("test-webchat.loopsai.com"))
-    }
-
     func testCustomEnvironmentHost() {
         let config = LoopsAIChatConfig(
             agentId: "agent_123",

@@ -11,7 +11,7 @@ final class LoopsHardeningTests: XCTestCase {
         func requireSendable<T: Sendable>(_ value: T) -> T { value }
         let config = LoopsAIChatConfig(
             agentId: "agt_x",
-            environment: .test,
+            environment: .production,
             features: LoopsFeatureFlags(voiceModeEnabled: true),
             analytics: LoopsAnalyticsConfig(
                 loopsSinkEndpoint: URL(string: "https://analytics.example.com/e")!,
@@ -30,8 +30,8 @@ final class LoopsHardeningTests: XCTestCase {
 
     func testEnvironmentEquatable() {
         XCTAssertEqual(LoopsEnvironment.production, .production)
-        XCTAssertNotEqual(LoopsEnvironment.production, .test)
         let url = URL(string: "https://chat.acme.com")!
+        XCTAssertNotEqual(LoopsEnvironment.production, .custom(url))
         XCTAssertEqual(LoopsEnvironment.custom(url), .custom(url))
     }
 

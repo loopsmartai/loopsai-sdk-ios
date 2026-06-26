@@ -3,13 +3,11 @@ import Foundation
 /// Where the SDK loads the web runtime from.
 public enum LoopsEnvironment: Sendable, Equatable {
     case production            // chat.loopsai.com
-    case test                  // test-webchat.loopsai.com
     case custom(URL)           // self-host / on-prem (host added to the allowlist)
 
     var baseURL: URL {
         switch self {
         case .production: return URL(string: "https://chat.loopsai.com")!
-        case .test:       return URL(string: "https://test-webchat.loopsai.com")!
         case .custom(let url): return url
         }
     }
