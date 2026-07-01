@@ -4,10 +4,11 @@
 [![Platform](https://img.shields.io/badge/platform-iOS%2015%2B-lightgrey.svg)](https://developer.apple.com/ios/)
 [![License](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)
 
-The official iOS SDK for [Loops AI](https://loopsai.com). A native container that
-embeds the Loops AI conversational commerce experience into any iOS app — chat,
-virtual try-on, AI product search, and size guidance. The web runtime owns the
-conversation UI; native owns the session, routing, and analytics. UIKit + SwiftUI.
+The official iOS SDK for [Loops AI](https://loopsai.com) — a thin native container
+that embeds the Loops AI chat experience (chat, virtual try-on, AI search, size
+guidance) into any iOS app. The web runtime owns the conversation UI;
+**native owns the session, routing, and analytics**. UIKit + SwiftUI.
+
 
 ---
 
@@ -74,19 +75,17 @@ LoopsAIChat.present(from: self, config: config)
 | Parameter | Type | Default | Description |
 |---|---|---|---|
 | `agentId` | `String` | — | Your Loops AI agent identifier (required). |
-| `environment` | `LoopsEnvironment` | `.production` | `.production` or `.custom(URL)`. |
+| `environment` | `LoopsEnvironment` | `.production` | `.production` (chat.loopsai.com) or `.custom(URL)` (on-prem). |
 | `initialContext` | `LoopsAIChatContext?` | `nil` | Product / user context at launch. |
 | `features` | `LoopsFeatureFlags` | `.default` | Per-launch flow-mode overrides. |
 | `analytics` | `LoopsAnalyticsConfig` | `.default` | Sink + customer analytics destinations. |
 | `locale` | `String?` | `nil` | Language code, e.g. `"en"`, `"tr"`. |
 | `showCloseButton` | `Bool` | `true` | Native close button (top-right). |
-| `keepAliveEnabled` | `Bool` | `true` | Keep the `WKWebView` warm between presentations for instant reopen. |
-| `startFresh` | `Bool` | `false` | Start a new conversation instead of resuming the last one. |
 
 ### Environments
 
 ```swift
-LoopsAIChatConfig(agentId: "…", environment: .production)
+LoopsAIChatConfig(agentId: "…", environment: .production)      // chat.loopsai.com
 LoopsAIChatConfig(agentId: "…", environment: .custom(URL(string: "https://chat.acme.com")!))
 ```
 
@@ -107,6 +106,7 @@ let config = LoopsAIChatConfig(
     )
 )
 
+// Update later (e.g. on product navigation):
 chatVC.updateContext(LoopsAIChatContext(productContext: ["productCode": "SKU-456"]))
 ```
 
@@ -114,31 +114,26 @@ chatVC.updateContext(LoopsAIChatContext(productContext: ["productCode": "SKU-456
 
 ## Flow modes
 
-Native entry points on `LoopsAIChatViewController`. Call after the bridge is
-ready (`loopsAIChatDidBecomeReady`):
+Drive native entry points on `LoopsAIChatViewController` (call after the bridge is
+ready — see the delegate's `loopsAIChatDidBecomeReady`):
 
 ```swift
 chatVC.sendMessage("I need help with sizing")
 chatVC.suggestSize()
 chatVC.startVirtualTryOn(product: ["productCode": "SKU-123"])
-chatVC.quoteProduct(product: ["productCode": "SKU-123"])
-chatVC.clearProductQuote()
-chatVC.startTryOnFromQuote()
-chatVC.openWithSearch("summer dress")
-chatVC.syncCustomerDetails(customerId: "cust_42")
-chatVC.setWebsiteFont("Inter, sans-serif")
-chatVC.startNewConversation()
-chatVC.setAnalyticsConsent(true)
-chatVC.closeOverlays()
+chatVC.startTryOnFromQuote()                 // try on the currently quoted product
+chatVC.openWithSearch("summer dress")        // AI search; productsOnly: true to restrict
+chatVC.syncCustomerDetails(customerId: "cust_42")  // enrich session with a known customer
+chatVC.setWebsiteFont("Inter, sans-serif")    // match chat typography to your app
 ```
 
-Flow modes the server config disables are safely ignored. Override per launch
-with `LoopsFeatureFlags`:
+Flow modes the server config disables are ignored. Override per launch with
+`LoopsFeatureFlags`:
 
 ```swift
 let config = LoopsAIChatConfig(
     agentId: "…",
-    features: LoopsFeatureFlags(virtualTryOnEnabled: true)
+    features: LoopsFeatureFlags(searchEscalationEnabled: true, virtualTryOnEnabled: true)
 )
 ```
 
@@ -170,43 +165,56 @@ SwiftUI exposes the same via closures on `LoopsAIChatView` (`onReady`,
 
 ## Analytics
 
-Analytics flow through the SDK on the **`mobile_app`** channel. The web runtime
-emits canonical events; the SDK re-dispatches them natively with
-`channel: "mobile_app"` and native context (`app_version`, `device`,
-`os_version`), so app and web reports share one taxonomy.
+Analytics flow through the SDK on the **`mobile_app`** channel, so app and web
+reports share one taxonomy. The web runtime emits canonical events; the SDK
+re-dispatches them natively (forcing `channel: "mobile_app"` + `app_version` /
+`device` / `os_version`) to an always-on Loops sink plus your optional adapter.
+
+```swift
+let analytics = LoopsAnalyticsConfig(
+    loopsSinkEndpoint: URL(string: "https://<your-ingest-endpoint>"),
+    customerAdapter: HttpWebhookAdapter(endpoint: URL(string: "https://acme.com/collect")!)
+)
+let config = LoopsAIChatConfig(agentId: "…", analytics: analytics)
+```
 
 Built-in adapters: `LoopsSinkAdapter` (always-on), `HttpWebhookAdapter` (generic
-POST), `BlockAnalyticsAdapter` (closure — wire Firebase / Mixpanel / Segment
-without a core dependency).
+POST), `BlockAnalyticsAdapter` (closure — wire Firebase/Mixpanel/Segment without
+a core dependency).
 
 ```swift
 let firebase = BlockAnalyticsAdapter(id: "firebase") { event in
     Analytics.logEvent(event.event, parameters: event.payload as? [String: Any])
 }
-let config = LoopsAIChatConfig(
-    agentId: "…",
-    analytics: LoopsAnalyticsConfig(customerAdapter: firebase)
+```
+
+### Emit your own native events
+
+Push your app's own canonical events (e.g. a commerce funnel) through the same
+pipeline — the native equivalent of the web `trackCanonicalEvent`:
+
+```swift
+let dispatcher = LoopsAnalyticsDispatcher(
+    sink: LoopsSinkAdapter(endpoint: sinkURL),
+    customer: nil
 )
+let event = LoopsAnalyticsEvent(
+    event: "purchase",
+    params: ["currency": "TRY", "value": 1299,
+             "ecommerce": ["items": [["item_id": "SKU-123", "quantity": 1]]]],
+    context: LoopsAnalyticsContext(locale: "en")
+)
+dispatcher.dispatch(event)   // forces channel:"mobile_app" + native context
 ```
 
 ---
 
 ## Native session
 
-The SDK owns the anonymous session natively (`UserDefaults`) and re-injects it on
-every WebView load, fixing the iOS WebKit storage-loss class of bugs. Session
-bootstrap runs automatically with retry and exponential backoff. No credentials
-are stored — only a pseudonymous anon id.
-
-### Resetting data
-
-```swift
-LoopsAIChat.clearWebCache()
-
-LoopsAIChat.resetAllData {
-    // completed on the main thread
-}
-```
+The SDK owns the anonymous session natively (Keychain) and re-injects it on every
+WebView load, fixing the iOS WebKit storage-loss class of bugs (`mode=sdk`). It
+bootstraps against `POST /api/widget/session` with retry/backoff. No tokens or
+credentials are stored — only a pseudonymous anon id.
 
 ---
 
@@ -214,13 +222,32 @@ LoopsAIChat.resetAllData {
 
 ```swift
 LoopsAIChat.present(from: self, config: config, style: .fullScreen)
-LoopsAIChat.present(from: self, config: config, style: .sheet())
-LoopsAIChat.present(from: self, config: config, style: .sheet(.locked))
-LoopsAIChat.present(from: self, config: config, style: .sheet(.interactive))
+LoopsAIChat.present(from: self, config: config, style: .sheet())            // swipe-dismiss
+LoopsAIChat.present(from: self, config: config, style: .sheet(.locked))     // close button only
+LoopsAIChat.present(from: self, config: config, style: .sheet(.interactive))// large + medium
 LoopsAIChat.push(from: navigationController, config: config)
 ```
 
 SwiftUI uses native `.fullScreenCover` / `.sheet` modifiers around `LoopsAIChatView`.
+
+---
+
+## Availability (server-controlled on/off)
+
+Turn chat on/off from the dashboard **without an app update** — mirrors the web
+widget's active/inactive channel. Query it before showing your chat entry point:
+
+```swift
+LoopsAIChat.fetchAvailability(agentId: "your_agent_id") { available in
+    chatButton.isHidden = !available
+}
+```
+
+Use this to keep chat off at release and flip it on later, or disable it for
+maintenance. It fails **open** (`true`) on a network error, so a transient blip
+never hides a working chat. For staging/QA builds that must load even while the
+channel is inactive, set `developmentMode: true` (or `designMode: true`) on the
+config.
 
 ---
 

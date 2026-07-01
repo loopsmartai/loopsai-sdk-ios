@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added — server-controlled availability
+
+- **`LoopsAIChat.fetchAvailability(agentId:)`** — reports whether the agent's web
+  channel is active (mirrors the web widget's `embedEnabled`), so hosts can show/
+  hide their chat entry point and toggle chat from the dashboard without an app
+  update. Fails open on network errors.
+- **`developmentMode` / `designMode`** config flags — load the runtime even when
+  the channel is inactive (staging / QA / design preview).
+
+### Changed
+
+- **Production-only environment**: the SDK now targets `chat.loopsai.com`
+  everywhere. `LoopsEnvironment.test` was removed; `.production` and `.custom(URL)`
+  remain. Keeps the iOS and Android SDKs in lockstep.
+
+### Removed
+
+- **Voice mode** is no longer exposed: the `openVoiceMode()` entry point and the
+  `voiceModeEnabled` / `speechToTextEnabled` feature flags were removed (the
+  `startVoiceMode` bridge action is retained internally, server-gated).
+
 ## [1.0.0] - 2026-06-15
 
 ### Added
@@ -28,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `closeOverlays()` (close a web overlay — VTO/size/sidebar — without unloading the
   WebView, e.g. on a back gesture), and automatic `mobileStateChange` on
   rotation/size-class change (compact = `horizontalSizeClass == .compact`). Closes
-  the remaining gap vs the web embed's host→iframe action set.
+  the remaining gap vs the web embed's host→iframe action set (CONTRACT B.3).
 - **Native analytics**: `LoopsAnalyticsEvent` (canonical, forced
   `channel:"mobile_app"`), `LoopsAnalyticsDispatcher` (always-on `LoopsSinkAdapter`
   + optional customer adapter), `HttpWebhookAdapter`, `BlockAnalyticsAdapter`
@@ -38,7 +61,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   push its own canonical events (e.g. a commerce funnel — `add_to_cart`,
   `begin_checkout`, `purchase`) through the same sink the bridge uses. Mirrors the
   web dispatcher's `trackCanonicalEvent`.
-- **Cache & Reset Control**: `LoopsAIChat.resetAllData()` for a complete data wipe (session store + cookies, localStorage, IndexedDB) and `LoopsAIChat.clearWebCache()` to purge kept-alive WebViews from memory.
 
 ### Changed
 

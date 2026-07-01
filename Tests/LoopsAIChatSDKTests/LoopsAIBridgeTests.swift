@@ -1,7 +1,7 @@
 import XCTest
 @testable import LoopsAIChatSDK
 
-/// Bridge-contract tests.
+/// Bridge-contract tests (CONTRACT Part B, native channel typed envelope).
 final class LoopsAIBridgeTests: XCTestCase {
 
     // MARK: - Inbound envelope parsing
@@ -84,12 +84,12 @@ final class LoopsAIBridgeTests: XCTestCase {
     }
 
     func testFeatureFlagsPayloadOnlyIncludesSetFlags() {
-        let flags = LoopsFeatureFlags(voiceModeEnabled: true, virtualTryOnEnabled: false)
+        let flags = LoopsFeatureFlags(searchEscalationEnabled: true, virtualTryOnEnabled: false)
         let payload = flags.payload()
-        XCTAssertEqual(payload["voiceModeEnabled"] as? Bool, true)
+        XCTAssertEqual(payload["searchEscalationEnabled"] as? Bool, true)
         XCTAssertEqual(payload["virtualTryOnEnabled"] as? Bool, false)
-        XCTAssertNil(payload["speechToTextEnabled"])
         XCTAssertNil(payload["productSuggestionEnabled"])
+        XCTAssertNil(payload["outfitSuggestionEnabled"])
         XCTAssertEqual(payload.count, 2)
     }
 

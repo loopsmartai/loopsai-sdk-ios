@@ -18,7 +18,7 @@ final class LoopsChatEngine {
     /// handshake. (A reused engine keeps its original; the new presentation
     /// re-applies any per-open context via `updateContext`.)
     let config: LoopsAIChatConfig
-    /// Natively-owned anon session. Outlives any single controller.
+    /// Natively-owned anon session (CONTRACT B.4). Outlives any single controller.
     let sessionStore: LoopsSessionStore
     /// Analytics fan-out. Lives on the engine so `trackEvent` dispatches even while
     /// the chat is closed (the host-facing delegate callback only fires when open).
@@ -86,7 +86,7 @@ final class LoopsChatEngine {
     }
 }
 
-/// Process-wide pool of long-lived chat engines.
+/// Process-wide pool of long-lived chat engines (CONTRACT B — performance).
 ///
 /// All engines use the persistent default `WKWebsiteDataStore`, so cookies /
 /// localStorage / IndexedDB and the HTTP cache are shared and survive between

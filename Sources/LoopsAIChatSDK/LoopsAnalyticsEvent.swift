@@ -1,10 +1,10 @@
 import Foundation
 import UIKit
 
-/// The canonical analytics event (`schema_version "1.0"`),
+/// The canonical analytics event (CONTRACT Part A, `schema_version "1.0"`),
 /// received from the web runtime over the `trackEvent` bridge action and
-/// re-dispatched natively. On mobile the SDK dictates the shape:
-/// `channel` is forced to `"mobile_app"` and native context
+/// re-dispatched natively. On mobile the SDK **dictates the shape** (OPEN #2,
+/// resolved): `channel` is forced to `"mobile_app"` and native context
 /// (`app_version`, `device`, `os_version`) is attached.
 public struct LoopsAnalyticsEvent {
     public static let schemaVersion = "1.0"
@@ -64,7 +64,7 @@ public struct LoopsAnalyticsEvent {
     }
 }
 
-/// Native-only base context attached to every event.
+/// Native-only base context attached to every event (CONTRACT Part A / PLAN §5).
 /// `app_version`/`device`/`os_version` are device facts the web can't know;
 /// the identity fields ride along when known.
 public struct LoopsAnalyticsContext {
