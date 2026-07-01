@@ -1,7 +1,7 @@
 import XCTest
 @testable import LoopsAIChatSDK
 
-/// Native analytics bridge tests.
+/// Native analytics bridge tests (CONTRACT Part A).
 final class LoopsAnalyticsTests: XCTestCase {
 
     private func context() -> LoopsAnalyticsContext {
@@ -88,7 +88,7 @@ final class LoopsAnalyticsTests: XCTestCase {
 
     func testConfigBuildsSinkAdapterFromEndpoint() {
         let config = LoopsAnalyticsConfig(
-            loopsSinkEndpoint: URL(string: "https://analytics.example.com/e")!
+            loopsSinkEndpoint: URL(string: "https://ingest.loopsai.com/e")!
         )
         // Dispatcher is built without throwing; sink present, no customer.
         let dispatcher = config.makeDispatcher()

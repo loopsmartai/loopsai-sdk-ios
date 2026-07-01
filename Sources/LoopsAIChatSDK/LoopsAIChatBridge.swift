@@ -1,7 +1,7 @@
 import Foundation
 import WebKit
 
-/// Native side of the `mode=sdk` bridge.
+/// Native side of the `mode=sdk` bridge (CONTRACT Part B, native channel).
 ///
 /// Inbound: decodes the typed envelope, enforces the origin + name allowlist, and
 /// routes to the host delegate / session owner. Outbound: wraps native→web actions
@@ -28,7 +28,7 @@ final class LoopsAIChatBridge: NSObject, WKScriptMessageHandler {
     ) {
         guard message.name == Self.handlerName else { return }
 
-        // Origin allowlist + main-frame only.
+        // Origin allowlist + main-frame only (CONTRACT B.6).
         if let host = message.frameInfo.request.url?.host,
            !allowedHosts.contains(host) {
             return
@@ -37,7 +37,7 @@ final class LoopsAIChatBridge: NSObject, WKScriptMessageHandler {
 
         guard let inbound = LoopsAIInboundMessage(body: message.body) else { return }
         guard let action = LoopsAIBridgeProtocol.WebAction(rawValue: inbound.name) else {
-            // Unknown name → ignored.
+            // Unknown name → ignored per contract.
             return
         }
 
@@ -139,9 +139,13 @@ final class LoopsAIChatBridge: NSObject, WKScriptMessageHandler {
 
     func sendInitConfig(to webView: WKWebView, config: LoopsAIChatConfig) {
         // Merge any explicit flow-mode flag overrides; absent flags keep the
-        // server-resolved agent config.
+        // server-resolved agent config (CONTRACT B.3).
         var cfg: [String: Any] = ["alwaysShowCloseButton": false]
         for (key, value) in config.features.payload() { cfg[key] = value }
+        // Preview overrides: load the runtime even when the web channel is inactive
+        // (mirrors the web widget's designMode / developmentMode). Only sent when on.
+        if config.developmentMode { cfg["developmentMode"] = true }
+        if config.designMode { cfg["designMode"] = true }
         send(.initConfig, payload: ["config": cfg], to: webView)
     }
 

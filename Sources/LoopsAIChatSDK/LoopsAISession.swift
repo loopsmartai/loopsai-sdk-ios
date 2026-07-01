@@ -1,6 +1,6 @@
 import Foundation
 
-/// Native ownership of the anonymous widget session.
+/// Native ownership of the anonymous widget session (CONTRACT B.4).
 ///
 /// iOS WebKit wipes partitioned third-party storage on app kill, so the web
 /// runtime cannot reliably keep the anon session in `mode=sdk`. The SDK persists
@@ -49,7 +49,7 @@ public final class LoopsSessionStore: @unchecked Sendable {
         }
     }
 
-    /// Applies a `persistSession` payload from the web runtime.
+    /// Applies a `persistSession` payload from the web runtime (CONTRACT B.2).
     func apply(persistSession payload: [String: Any]) {
         if let uid = payload["anonUserId"] as? String, !uid.isEmpty {
             anonUserId = uid
@@ -73,7 +73,7 @@ public final class LoopsSessionStore: @unchecked Sendable {
     }
 }
 
-/// Bootstraps the anon session against `POST /api/widget/session`,
+/// Bootstraps the anon session against `POST /api/widget/session` (CONTRACT B.4),
 /// migrating any locally-stored legacy id, then caches the result in the store.
 struct LoopsSessionBootstrapper {
     let baseURL: URL

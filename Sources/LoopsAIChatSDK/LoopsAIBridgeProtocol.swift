@@ -1,6 +1,6 @@
 import Foundation
 
-/// The frozen `mode=sdk` bridge protocol.
+/// The frozen `mode=sdk` bridge protocol (CONTRACT Part B, native channel).
 ///
 /// The native channel (`loopsAIBridge`) uses a **typed envelope**:
 /// ```jsonc
@@ -10,13 +10,13 @@ import Foundation
 /// The iframe/embed channel keeps the legacy flat `{ action }` shape — that is a
 /// separate transport the SDK never touches.
 enum LoopsAIBridgeProtocol {
-    /// Bump only via a coordinated web + iOS + Android update.
+    /// Bump only via a coordinated web + iOS + Android update (CONTRACT change policy).
     static let version = 1
 
     /// Envelope `type` discriminator. Only `nativeAction` is defined in v1.
     static let messageType = "nativeAction"
 
-    /// Web → native action names the SDK handles.
+    /// Web → native action names the SDK handles (CONTRACT B.2 allowlist).
     /// Anything not listed here is ignored.
     enum WebAction: String, CaseIterable {
         case ready
@@ -35,7 +35,7 @@ enum LoopsAIBridgeProtocol {
         case overlayClosed
     }
 
-    /// Native → web action names the SDK sends.
+    /// Native → web action names the SDK sends (CONTRACT B.3).
     enum NativeAction: String {
         case initConfig
         case initContext
@@ -48,7 +48,7 @@ enum LoopsAIBridgeProtocol {
         case suggestSize
         case syncCustomerDetails
         case setWebsiteFont
-        case startVoiceMode          // enters voice mode (gated by voiceModeEnabled)
+        case startVoiceMode          // reserved — server-gated, no public entry point
         case setAnalyticsConsent     // host CMP consent → web A.4 consent gate
         case clearProductQuote       // clear the active quote chip
         case closeOverlays           // dispatch loopsai:close-overlays in the runtime

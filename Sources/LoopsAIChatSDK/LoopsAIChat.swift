@@ -62,6 +62,31 @@ public enum LoopsAIChat {
         return chatVC
     }
 
+    /// Query whether the agent's web channel is **active** (server-controlled), so
+    /// you can show or hide your chat entry point without shipping an app update.
+    /// Mirrors the web widget's `embedEnabled` gate — flip the channel on/off from
+    /// the dashboard and this reflects it (e.g. keep chat off at release, turn it on
+    /// later; or disable it for maintenance).
+    ///
+    /// Fails **open** (`true`) on a network/parse error, matching the web behavior.
+    /// `completion` is delivered on the main thread.
+    public static func fetchAvailability(
+        agentId: String,
+        environment: LoopsEnvironment = .production,
+        completion: @escaping (Bool) -> Void
+    ) {
+        let url = environment.baseURL.appendingPathComponent("api/embed/\(agentId)/style")
+        URLSession.shared.dataTask(with: url) { data, _, error in
+            var available = true
+            if error == nil, let data,
+               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let embedEnabled = json["embedEnabled"] as? Bool {
+                available = embedEnabled
+            }
+            DispatchQueue.main.async { completion(available) }
+        }.resume()
+    }
+
     /// Drop every kept-alive chat runtime (the warm `WKWebView` pool). Call on
     /// logout / account switch, or under memory pressure, so the next presentation
     /// cold-loads fresh. The shared HTTP cache / cookies / localStorage in the

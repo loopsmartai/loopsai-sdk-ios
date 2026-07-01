@@ -1,6 +1,6 @@
 import Foundation
 
-/// Where the SDK loads the web runtime from.
+/// Where the SDK loads the web runtime from (CONTRACT B.6 origin allowlist).
 public enum LoopsEnvironment: Sendable, Equatable {
     case production            // chat.loopsai.com
     case custom(URL)           // self-host / on-prem (host added to the allowlist)
@@ -37,6 +37,12 @@ public struct LoopsAIChatConfig: Sendable {
     /// engine is still bypassed) — e.g. for a kiosk that must reset per session.
     public let keepAliveEnabled: Bool
 
+    /// Load the chat runtime even when the agent's web channel is inactive
+    /// (staging / QA / design preview) — mirrors the web widget's `developmentMode`
+    /// / `designMode`. Leave `false` in production so a disabled channel stays off.
+    public let developmentMode: Bool
+    public let designMode: Bool
+
     public init(
         agentId: String,
         environment: LoopsEnvironment = .production,
@@ -46,7 +52,9 @@ public struct LoopsAIChatConfig: Sendable {
         locale: String? = nil,
         showCloseButton: Bool = true,
         startFresh: Bool = false,
-        keepAliveEnabled: Bool = true
+        keepAliveEnabled: Bool = true,
+        developmentMode: Bool = false,
+        designMode: Bool = false
     ) {
         self.agentId = agentId
         self.environment = environment
@@ -57,6 +65,8 @@ public struct LoopsAIChatConfig: Sendable {
         self.showCloseButton = showCloseButton
         self.startFresh = startFresh
         self.keepAliveEnabled = keepAliveEnabled
+        self.developmentMode = developmentMode
+        self.designMode = designMode
     }
 
     var baseURL: URL { environment.baseURL }
@@ -71,7 +81,7 @@ public struct LoopsAIChatConfig: Sendable {
     }
 
     /// Builds the `mode=sdk` chat URL, re-injecting the natively-owned session
-    /// (`_lsuid` / `_lscid`) on every load.
+    /// (`_lsuid` / `_lscid`) on every load (CONTRACT B.4).
     ///
     /// When `fresh` is `true`, `_lscid` is omitted and `fresh=true` is added so
     /// the web runtime starts a new conversation and ignores any prior one

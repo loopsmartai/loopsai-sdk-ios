@@ -1,6 +1,6 @@
 import Foundation
 
-/// A transport for canonical analytics events. Each adapter
+/// A transport for canonical analytics events (CONTRACT Part A). Each adapter
 /// relabels/delivers to one target; the dispatcher never knows the target.
 ///
 /// `Sendable`: adapters are held in `LoopsAIChatConfig` and may run their
@@ -11,7 +11,7 @@ public protocol LoopsAnalyticsAdapter: Sendable {
 }
 
 /// Fans a canonical event out to the always-on Loops sink plus an optional
-/// per-agent customer adapter (mirrors the web dispatcher).
+/// per-agent customer adapter (CONTRACT Part A, mirrors the web dispatcher).
 /// The sink is isolated: a customer adapter can never suppress it.
 public final class LoopsAnalyticsDispatcher: Sendable {
     private let sink: (any LoopsAnalyticsAdapter)?
@@ -34,7 +34,7 @@ public final class LoopsAnalyticsDispatcher: Sendable {
 // MARK: - Built-in adapters
 
 /// Always-on sink → our backend ingest (Firestore via a `functions` endpoint,
-/// Carries the canonical event unrelabelled.
+/// CONTRACT Part A). Carries the canonical event unrelabelled.
 public struct LoopsSinkAdapter: LoopsAnalyticsAdapter {
     public let id = "loops-sink"
     let endpoint: URL
@@ -98,7 +98,7 @@ public struct BlockAnalyticsAdapter: LoopsAnalyticsAdapter {
 }
 
 /// Per-agent analytics configuration: which always-on sink and which customer
-/// adapter to fan out to (selection happens server-side; the SDK
+/// adapter to fan out to (CONTRACT A.3 selection happens server-side; the SDK
 /// is told the resolved choice here — no per-customer native code).
 public struct LoopsAnalyticsConfig: Sendable {
     /// Always-on Loops sink endpoint (`nil` disables the sink — e.g. tests).

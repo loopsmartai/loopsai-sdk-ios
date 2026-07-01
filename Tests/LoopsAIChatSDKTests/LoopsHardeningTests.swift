@@ -12,9 +12,9 @@ final class LoopsHardeningTests: XCTestCase {
         let config = LoopsAIChatConfig(
             agentId: "agt_x",
             environment: .production,
-            features: LoopsFeatureFlags(voiceModeEnabled: true),
+            features: LoopsFeatureFlags(virtualTryOnEnabled: true),
             analytics: LoopsAnalyticsConfig(
-                loopsSinkEndpoint: URL(string: "https://analytics.example.com/e")!,
+                loopsSinkEndpoint: URL(string: "https://ingest.loopsai.com/e")!,
                 customerAdapter: BlockAnalyticsAdapter(id: "noop") { _ in }
             )
         )
@@ -31,8 +31,8 @@ final class LoopsHardeningTests: XCTestCase {
     func testEnvironmentEquatable() {
         XCTAssertEqual(LoopsEnvironment.production, .production)
         let url = URL(string: "https://chat.acme.com")!
-        XCTAssertNotEqual(LoopsEnvironment.production, .custom(url))
         XCTAssertEqual(LoopsEnvironment.custom(url), .custom(url))
+        XCTAssertNotEqual(LoopsEnvironment.production, .custom(url))
     }
 
     func testBlockAdapterRunsHandler() {
