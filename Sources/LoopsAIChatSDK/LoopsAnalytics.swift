@@ -34,7 +34,7 @@ public final class LoopsAnalyticsDispatcher: Sendable {
 // MARK: - Built-in adapters
 
 /// Always-on sink → our backend ingest (Firestore via a `functions` endpoint,
-/// CONTRACT Part A). Carries the canonical event unrelabelled.
+/// CONTRACT Part A / TASK-0011). Carries the canonical event unrelabelled.
 public struct LoopsSinkAdapter: LoopsAnalyticsAdapter {
     public let id = "loops-sink"
     let endpoint: URL

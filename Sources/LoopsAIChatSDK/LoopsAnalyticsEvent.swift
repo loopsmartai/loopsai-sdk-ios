@@ -4,16 +4,18 @@ import UIKit
 /// The canonical analytics event (CONTRACT Part A, `schema_version "1.0"`),
 /// received from the web runtime over the `trackEvent` bridge action and
 /// re-dispatched natively. On mobile the SDK **dictates the shape** (OPEN #2,
-/// resolved): `channel` is forced to `"mobile_app"` and native context
+/// resolved): `channel` is forced to `"ios"` and native context
 /// (`app_version`, `device`, `os_version`) is attached.
 public struct LoopsAnalyticsEvent {
     public static let schemaVersion = "1.0"
-    public static let channel = "mobile_app"
+    public static let channel = "ios"
 
     /// Canonical event name (e.g. `loops_ai_view_item_list`).
     public let event: String
-    /// Always `"mobile_app"` on native.
+    /// Always `"ios"` on native.
     public let channel: String
+    /// Discriminates canonical ecommerce events from customer-interaction events; defaults to `"ecommerce"`.
+    public let kind: String
     /// The full canonical payload (Part A envelope) with `channel` + native
     /// context applied — ready for adapters and the host callback.
     public let payload: [String: Any]
@@ -23,22 +25,28 @@ public struct LoopsAnalyticsEvent {
         let raw = (bridgePayload["event"] as? [String: Any]) ?? bridgePayload
         guard let event = raw["event"] as? String else { return nil }
 
+        let kind = (raw["kind"] as? String)
+            ?? (bridgePayload["kind"] as? String)
+            ?? "ecommerce"
+
         var merged = raw
         merged["schema_version"] = Self.schemaVersion
         merged["channel"] = Self.channel
+        merged["kind"] = kind
         for (key, value) in context.fields() where merged[key] == nil {
             merged[key] = value
         }
 
         self.event = event
         self.channel = Self.channel
+        self.kind = kind
         self.payload = merged
     }
 
     /// Construct a canonical native event from a **host-side** action — e.g. the
     /// host app's own commerce funnel (`add_to_cart`, `begin_checkout`,
     /// `purchase`) — mirroring the web dispatcher's `trackCanonicalEvent`. Forces
-    /// `channel:"mobile_app"` + `schema_version` and attaches native context, so
+    /// `channel:"ios"` + `schema_version` and attaches native context, so
     /// host events look identical to bridge-relayed ones. Deliver it with
     /// ``LoopsAnalyticsDispatcher/dispatch(_:)`` or your own adapter.
     ///
@@ -55,11 +63,13 @@ public struct LoopsAnalyticsEvent {
         merged["event"] = event
         merged["schema_version"] = Self.schemaVersion
         merged["channel"] = Self.channel
+        merged["kind"] = "ecommerce"
         for (key, value) in context.fields() where merged[key] == nil {
             merged[key] = value
         }
         self.event = event
         self.channel = Self.channel
+        self.kind = "ecommerce"
         self.payload = merged
     }
 }

@@ -41,7 +41,7 @@ public protocol LoopsAIChatDelegate: AnyObject {
     func loopsAIChat(_ viewController: LoopsAIChatViewController, isResponding: Bool)
 
     /// A canonical analytics event crossed the bridge (CONTRACT Part A,
-    /// `channel:"mobile_app"`). Delivered as-is — the SDK dictates the shape.
+    /// `channel:"ios"`). Delivered as-is — the SDK dictates the shape.
     func loopsAIChat(_ viewController: LoopsAIChatViewController, didEmitAnalyticsEvent event: LoopsAnalyticsEvent)
 
     /// The active product quote changed (`nil` when cleared).
@@ -53,7 +53,9 @@ public protocol LoopsAIChatDelegate: AnyObject {
     /// The web runtime requested the container to close.
     func loopsAIChatDidRequestClose(_ viewController: LoopsAIChatViewController)
 
-    /// A foreign link / `openExternalUrl` should open outside the WebView.
+    /// A foreign link / `openExternalUrl` / `_blank` request should open outside the
+    /// chat WebView. The SDK default presents an in-app `SFSafariViewController` with
+    /// the URL untouched; implement this to override with native product routing.
     func loopsAIChat(_ viewController: LoopsAIChatViewController, didRequestOpenURL url: URL)
 
     /// An unrecoverable error occurred (load / bridge / session).
@@ -82,7 +84,7 @@ public extension LoopsAIChatDelegate {
     }
 
     func loopsAIChat(_ viewController: LoopsAIChatViewController, didRequestOpenURL url: URL) {
-        UIApplication.shared.open(url)
+        viewController.presentInAppBrowser(url: url)
     }
 
     func loopsAIChat(_ viewController: LoopsAIChatViewController, didFailWith error: LoopsError) {}

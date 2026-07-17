@@ -9,15 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added — server-controlled availability
 
-- **`LoopsAIChat.fetchAvailability(agentId:)`** — reports whether the agent's web
-  channel is active (mirrors the web widget's `embedEnabled`), so hosts can show/
-  hide their chat entry point and toggle chat from the dashboard without an app
-  update. Fails open on network errors.
+- **`LoopsAIChat.fetchAvailability(agentId:)`** — reports whether the agent is
+  active for this platform. Reads the iOS channel's own Active/Passive status and
+  falls back to the web channel when the iOS channel is unset, so hosts can show/
+  hide their chat entry point and toggle iOS independently of web and Android from
+  the dashboard, without an app update. Fails open on network errors.
 - **`developmentMode` / `designMode`** config flags — load the runtime even when
   the channel is inactive (staging / QA / design preview).
 
 ### Changed
 
+- **Analytics channel is now `"ios"`** (was `"mobile_app"`): canonical events are
+  relabelled with the per-platform channel, following the platform split of the
+  former single mobile channel. Events also carry a **`kind`** field
+  (`"ecommerce"` | `"interaction"`) discriminating canonical ecommerce events
+  from customer-interaction events; it defaults to `"ecommerce"` when absent.
 - **Production-only environment**: the SDK now targets `chat.loopsai.com`
   everywhere. `LoopsEnvironment.test` was removed; `.production` and `.custom(URL)`
   remain. Keeps the iOS and Android SDKs in lockstep.
@@ -32,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **v2 bridge**: typed `nativeAction` envelope (`protocolVersion 1`),
+- **v2 bridge** (TASK-0014): typed `nativeAction` envelope (`protocolVersion 1`),
   full web→native / native→web action allowlists, native session ownership
   (`_lsuid`/`_lscid` re-injection), `ready` handshake, and host
   callbacks (`onReady`/`onMessage`/`onResponding`/`onProductQuoteChanged`/
@@ -42,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so the runtime starts a brand-new conversation instead of resuming the last one
   (local cache *and* the server's most-recent). Fixes entry points like "Ask AI"
   that should feel fresh, and gives hosts a real "new chat" action.
-- **Flow modes**: `openWithSearch(_:productsOnly:)`,
+- **Flow modes** (TASK-0016): `openWithSearch(_:productsOnly:)`,
   `startTryOnFromQuote()`, `openVoiceMode()`, `syncCustomerDetails(customerId:)`,
   `setWebsiteFont(_:)`; `LoopsFeatureFlags` forwarded via `initConfig`;
   `WKUIDelegate` microphone-capture grant for voice (host must add
@@ -52,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   WebView, e.g. on a back gesture), and automatic `mobileStateChange` on
   rotation/size-class change (compact = `horizontalSizeClass == .compact`). Closes
   the remaining gap vs the web embed's host→iframe action set (CONTRACT B.3).
-- **Native analytics**: `LoopsAnalyticsEvent` (canonical, forced
+- **Native analytics** (TASK-0015): `LoopsAnalyticsEvent` (canonical, forced
   `channel:"mobile_app"`), `LoopsAnalyticsDispatcher` (always-on `LoopsSinkAdapter`
   + optional customer adapter), `HttpWebhookAdapter`, `BlockAnalyticsAdapter`
   (decouples Firebase/Mixpanel/Segment), `LoopsAnalyticsConfig`.

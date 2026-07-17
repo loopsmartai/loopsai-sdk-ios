@@ -9,6 +9,13 @@ that embeds the Loops AI chat experience (chat, virtual try-on, AI search, size
 guidance) into any iOS app. The web runtime owns the conversation UI;
 **native owns the session, routing, and analytics**. UIKit + SwiftUI.
 
+> 🔒 **Internal repository — source of truth.** This is the private development
+> repo (`loopsmartai/loopsai-sdk-ios-internal`). External consumers use the
+> public mirror: **[`loopsmartai/loopsai-sdk-ios`](https://github.com/loopsmartai/loopsai-sdk-ios)**.
+> All development happens here and is mirrored to public by replacing files.
+> Work through the `develop` branch — never push to `main` directly. See
+> [`AGENTS.md`](AGENTS.md) for the full internal/public workflow.
+> _(This block is stripped when mirroring to the public repo.)_
 
 ---
 
@@ -17,18 +24,18 @@ guidance) into any iOS app. The web runtime owns the conversation UI;
 ### Swift Package Manager (Xcode)
 
 1. **File → Add Package Dependencies**
-2. Enter `https://github.com/loopsmartai/loopsai-sdk-ios.git`
+2. Enter `https://github.com/loopsmartai/loopsai-sdk-ios-internal.git`
 3. Add **`LoopsAIChatSDK`** to your target.
 
 ### Package.swift
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/loopsmartai/loopsai-sdk-ios.git", from: "1.0.0")
+    .package(url: "https://github.com/loopsmartai/loopsai-sdk-ios-internal.git", from: "1.0.0")
 ],
 targets: [
     .target(name: "YourApp", dependencies: [
-        .product(name: "LoopsAIChatSDK", package: "loopsai-sdk-ios")
+        .product(name: "LoopsAIChatSDK", package: "loopsai-sdk-ios-internal")
     ])
 ]
 ```
@@ -165,9 +172,9 @@ SwiftUI exposes the same via closures on `LoopsAIChatView` (`onReady`,
 
 ## Analytics
 
-Analytics flow through the SDK on the **`mobile_app`** channel, so app and web
+Analytics flow through the SDK on the **`ios`** channel, so app and web
 reports share one taxonomy. The web runtime emits canonical events; the SDK
-re-dispatches them natively (forcing `channel: "mobile_app"` + `app_version` /
+re-dispatches them natively (forcing `channel: "ios"` + `app_version` /
 `device` / `os_version`) to an always-on Loops sink plus your optional adapter.
 
 ```swift
@@ -204,7 +211,7 @@ let event = LoopsAnalyticsEvent(
              "ecommerce": ["items": [["item_id": "SKU-123", "quantity": 1]]]],
     context: LoopsAnalyticsContext(locale: "en")
 )
-dispatcher.dispatch(event)   // forces channel:"mobile_app" + native context
+dispatcher.dispatch(event)   // forces channel:"ios" + native context
 ```
 
 ---
@@ -234,8 +241,11 @@ SwiftUI uses native `.fullScreenCover` / `.sheet` modifiers around `LoopsAIChatV
 
 ## Availability (server-controlled on/off)
 
-Turn chat on/off from the dashboard **without an app update** — mirrors the web
-widget's active/inactive channel. Query it before showing your chat entry point:
+Turn chat on/off from the dashboard **without an app update** — the iOS channel
+has its own Active/Passive toggle in the Channels tab, independent of web and
+Android. While the iOS channel is unset (never configured), availability falls
+back to the web channel's `embedEnabled` gate. Query it before showing your
+chat entry point:
 
 ```swift
 LoopsAIChat.fetchAvailability(agentId: "your_agent_id") { available in
