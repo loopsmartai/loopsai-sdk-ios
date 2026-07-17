@@ -1,7 +1,7 @@
 import XCTest
 @testable import LoopsAIChatSDK
 
-/// Native analytics bridge tests (CONTRACT Part A).
+/// Native analytics bridge tests (CONTRACT Part A, TASK-0015).
 final class LoopsAnalyticsTests: XCTestCase {
 
     private func context() -> LoopsAnalyticsContext {
@@ -15,13 +15,13 @@ final class LoopsAnalyticsTests: XCTestCase {
         )
     }
 
-    func testEventForcesMobileChannelAndSchema() {
+    func testEventForcesIOSChannelAndSchema() {
         let payload: [String: Any] = ["event": ["event": "loops_ai_view_item_list", "channel": "web"]]
         let event = LoopsAnalyticsEvent(bridgePayload: payload, context: context())
         XCTAssertNotNil(event)
         XCTAssertEqual(event?.event, "loops_ai_view_item_list")
-        XCTAssertEqual(event?.channel, "mobile_app")
-        XCTAssertEqual(event?.payload["channel"] as? String, "mobile_app")
+        XCTAssertEqual(event?.channel, "ios")
+        XCTAssertEqual(event?.payload["channel"] as? String, "ios")
         XCTAssertEqual(event?.payload["schema_version"] as? String, "1.0")
     }
 
@@ -52,7 +52,27 @@ final class LoopsAnalyticsTests: XCTestCase {
         // Even if web claims a different channel, native wins.
         let payload: [String: Any] = ["event": ["event": "loops_ai_view_item_list", "channel": "whatsapp"]]
         let event = LoopsAnalyticsEvent(bridgePayload: payload, context: context())
-        XCTAssertEqual(event?.payload["channel"] as? String, "mobile_app")
+        XCTAssertEqual(event?.payload["channel"] as? String, "ios")
+    }
+
+    func testKindReadsInteractionFromPayloadLevel() {
+        let payload: [String: Any] = ["kind": "interaction", "event": ["event": "loops_ai_message_sent"]]
+        let event = LoopsAnalyticsEvent(bridgePayload: payload, context: context())
+        XCTAssertEqual(event?.kind, "interaction")
+        XCTAssertEqual(event?.payload["kind"] as? String, "interaction")
+    }
+
+    func testKindReadsInteractionFromEventEnvelope() {
+        let payload: [String: Any] = ["event": ["event": "loops_ai_message_sent", "kind": "interaction"]]
+        let event = LoopsAnalyticsEvent(bridgePayload: payload, context: context())
+        XCTAssertEqual(event?.kind, "interaction")
+        XCTAssertEqual(event?.payload["kind"] as? String, "interaction")
+    }
+
+    func testKindDefaultsToEcommerceWhenAbsent() {
+        let payload: [String: Any] = ["event": ["event": "loops_ai_view_item_list"]]
+        let event = LoopsAnalyticsEvent(bridgePayload: payload, context: context())
+        XCTAssertEqual(event?.kind, "ecommerce")
     }
 
     // MARK: - Dispatcher

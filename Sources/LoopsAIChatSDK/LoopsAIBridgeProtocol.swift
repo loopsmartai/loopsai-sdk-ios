@@ -25,7 +25,7 @@ enum LoopsAIBridgeProtocol {
         case openModule
         case openExternalUrl
         case requestTokenRefresh
-        case trackEvent              // analytics passthrough
+        case trackEvent              // analytics passthrough → TASK-0015
         case respondingStateChange
         case productQuoteChanged
         case conversationActive

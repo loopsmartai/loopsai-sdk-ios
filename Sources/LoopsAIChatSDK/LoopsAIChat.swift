@@ -62,11 +62,10 @@ public enum LoopsAIChat {
         return chatVC
     }
 
-    /// Query whether the agent's web channel is **active** (server-controlled), so
-    /// you can show or hide your chat entry point without shipping an app update.
-    /// Mirrors the web widget's `embedEnabled` gate — flip the channel on/off from
-    /// the dashboard and this reflects it (e.g. keep chat off at release, turn it on
-    /// later; or disable it for maintenance).
+    /// Query whether this iOS SDK channel is **active** (server-controlled), so you
+    /// can show or hide your chat entry point without shipping an app update. Reads
+    /// the per-platform `iosEnabled` flag from the dashboard, falling back to the
+    /// web `embedEnabled` gate when the iOS channel is unset.
     ///
     /// Fails **open** (`true`) on a network/parse error, matching the web behavior.
     /// `completion` is delivered on the main thread.
@@ -79,9 +78,12 @@ public enum LoopsAIChat {
         URLSession.shared.dataTask(with: url) { data, _, error in
             var available = true
             if error == nil, let data,
-               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let embedEnabled = json["embedEnabled"] as? Bool {
-                available = embedEnabled
+               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                if let iosEnabled = json["iosEnabled"] as? Bool {
+                    available = iosEnabled
+                } else if let embedEnabled = json["embedEnabled"] as? Bool {
+                    available = embedEnabled
+                }
             }
             DispatchQueue.main.async { completion(available) }
         }.resume()

@@ -1,5 +1,6 @@
 import UIKit
 import WebKit
+import SafariServices
 
 open class LoopsAIChatViewController: UIViewController {
     public let config: LoopsAIChatConfig
@@ -399,6 +400,32 @@ open class LoopsAIChatViewController: UIViewController {
         // Reserved for the optional auth provider (PLAN open question #4).
     }
 
+    // MARK: - Outbound links
+
+    /// Single entry point for links that must leave the chat WebView: foreign-host
+    /// navigations, `_blank` / `window.open` requests, and the `openExternalUrl`
+    /// bridge action. Routes to the host so a custom `didRequestOpenURL` can take
+    /// over native routing; otherwise the delegate default presents the in-app
+    /// browser. The URL is forwarded verbatim so the query (e.g. `loops_ref`
+    /// Custom Attribution) survives.
+    func handleOutboundURL(_ url: URL) {
+        delegate?.loopsAIChat(self, didRequestOpenURL: url)
+    }
+
+    /// SDK default for outbound links: open in an in-app `SFSafariViewController`
+    /// from the top-most presented controller, preserving the exact URL. Non-web
+    /// schemes (mailto/tel/custom) fall back to the system opener since
+    /// `SFSafariViewController` only supports http/https.
+    public func presentInAppBrowser(url: URL) {
+        guard let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" else {
+            UIApplication.shared.open(url)
+            return
+        }
+        var presenter: UIViewController = self
+        while let presented = presenter.presentedViewController { presenter = presented }
+        presenter.present(SFSafariViewController(url: url), animated: true)
+    }
+
     // MARK: - Error UI
 
     private func showErrorView() {
@@ -519,7 +546,7 @@ extension LoopsAIChatViewController: WKNavigationDelegate {
         }
 
         // Foreign link → open outside the WebView (CONTRACT B.6).
-        delegate?.loopsAIChat(self, didRequestOpenURL: url)
+        handleOutboundURL(url)
         decisionHandler(.cancel)
     }
 
@@ -554,6 +581,21 @@ extension LoopsAIChatViewController: WKNavigationDelegate {
 }
 
 extension LoopsAIChatViewController: WKUIDelegate {
+    /// `target="_blank"` / `window.open` navigations never reach `decidePolicyFor`,
+    /// so intercept the new-window request here and route it through the same
+    /// outbound path, returning nil so no popup WebView is created.
+    public func webView(
+        _ webView: WKWebView,
+        createWebViewWith configuration: WKWebViewConfiguration,
+        for navigationAction: WKNavigationAction,
+        windowFeatures: WKWindowFeatures
+    ) -> WKWebView? {
+        if let url = navigationAction.request.url {
+            handleOutboundURL(url)
+        }
+        return nil
+    }
+
     /// Grant media capture only to allowlisted origins. The host app still needs the
     /// matching usage-description key in its Info.plist or iOS denies the prompt.
     @available(iOS 15.0, *)

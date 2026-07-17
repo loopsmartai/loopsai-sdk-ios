@@ -41,7 +41,7 @@ public struct LoopsAIChatView: UIViewControllerRepresentable {
             if let handler = onOpenURL {
                 handler(url)
             } else {
-                UIApplication.shared.open(url)
+                viewController.presentInAppBrowser(url: url)
             }
         }
 

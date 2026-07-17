@@ -1,7 +1,7 @@
 import XCTest
 @testable import LoopsAIChatSDK
 
-/// Production-hardening guarantees: strict concurrency + retry.
+/// Production-hardening guarantees (TASK-0012): strict concurrency + retry.
 final class LoopsHardeningTests: XCTestCase {
 
     /// Compile-time proof that the config graph is `Sendable` (safe to pass

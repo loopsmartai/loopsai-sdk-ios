@@ -77,7 +77,7 @@ final class LoopsAIBridgeTests: XCTestCase {
         XCTAssertEqual(LoopsAIBridgeProtocol.NativeAction.mobileStateChange.rawValue, "mobileStateChange")
     }
 
-    // MARK: - Feature flags
+    // MARK: - Feature flags (TASK-0016)
 
     func testFeatureFlagsDefaultEmptyPayload() {
         XCTAssertTrue(LoopsFeatureFlags.default.payload().isEmpty)
