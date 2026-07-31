@@ -1,7 +1,7 @@
 import Foundation
 import WebKit
 
-/// Native side of the `mode=sdk` bridge (CONTRACT Part B, native channel).
+/// Native side of the `mode=sdk` bridge (native channel).
 ///
 /// Inbound: decodes the typed envelope, enforces the origin + name allowlist, and
 /// routes to the host delegate / session owner. Outbound: wraps native→web actions
@@ -28,7 +28,7 @@ final class LoopsAIChatBridge: NSObject, WKScriptMessageHandler {
     ) {
         guard message.name == Self.handlerName else { return }
 
-        // Origin allowlist + main-frame only (CONTRACT B.6).
+        // Origin allowlist + main-frame only.
         if let host = message.frameInfo.request.url?.host,
            !allowedHosts.contains(host) {
             return
@@ -139,7 +139,7 @@ final class LoopsAIChatBridge: NSObject, WKScriptMessageHandler {
 
     func sendInitConfig(to webView: WKWebView, config: LoopsAIChatConfig) {
         // Merge any explicit flow-mode flag overrides; absent flags keep the
-        // server-resolved agent config (CONTRACT B.3).
+        // server-resolved agent config.
         var cfg: [String: Any] = ["alwaysShowCloseButton": false]
         // Reserve right-edge header space for the native close button (32pt button +
         // 16pt trailing inset + gap) so web content clears the overlaid control.

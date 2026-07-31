@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 
-/// A product quote surfaced by the web runtime (CONTRACT B.2 `productQuoteChanged`).
+/// A product quote surfaced by the web runtime (`productQuoteChanged`).
 /// `nil` quote means the quote was cleared.
 public struct LoopsProductQuote: Sendable, Equatable {
     public let code: String
@@ -27,7 +27,7 @@ public enum LoopsError: Error, Sendable {
     case session(reason: String)
 }
 
-/// Host callbacks for a `LoopsAIChatViewController` (CONTRACT B.5).
+/// Host callbacks for a `LoopsAIChatViewController`.
 /// All methods are optional — default no-op implementations are provided, except
 /// the two navigation callbacks which keep their historical default behavior.
 public protocol LoopsAIChatDelegate: AnyObject {
@@ -40,8 +40,8 @@ public protocol LoopsAIChatDelegate: AnyObject {
     /// The bot started (`true`) or stopped (`false`) responding.
     func loopsAIChat(_ viewController: LoopsAIChatViewController, isResponding: Bool)
 
-    /// A canonical analytics event crossed the bridge (CONTRACT Part A,
-    /// `channel:"ios"`). Delivered as-is — the SDK dictates the shape.
+    /// A canonical analytics event crossed the bridge (`channel:"ios"`).
+    /// Delivered as-is — the SDK dictates the shape.
     func loopsAIChat(_ viewController: LoopsAIChatViewController, didEmitAnalyticsEvent event: LoopsAnalyticsEvent)
 
     /// The active product quote changed (`nil` when cleared).

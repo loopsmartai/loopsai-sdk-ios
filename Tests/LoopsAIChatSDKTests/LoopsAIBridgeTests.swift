@@ -1,7 +1,7 @@
 import XCTest
 @testable import LoopsAIChatSDK
 
-/// Bridge-contract tests (CONTRACT Part B, native channel typed envelope).
+/// Bridge-contract tests (native channel typed envelope).
 final class LoopsAIBridgeTests: XCTestCase {
 
     // MARK: - Inbound envelope parsing
@@ -33,7 +33,7 @@ final class LoopsAIBridgeTests: XCTestCase {
     }
 
     func testRejectsLegacyFlatShape() {
-        // The native channel ignores the iframe/embed flat `{action}` shape (B.1).
+        // The native channel ignores the iframe/embed flat `{action}` shape.
         let body: [String: Any] = ["action": "closeChat", "url": "https://x.com"]
         XCTAssertNil(LoopsAIInboundMessage(body: body))
     }
@@ -77,7 +77,7 @@ final class LoopsAIBridgeTests: XCTestCase {
         XCTAssertEqual(LoopsAIBridgeProtocol.NativeAction.mobileStateChange.rawValue, "mobileStateChange")
     }
 
-    // MARK: - Feature flags (TASK-0016)
+    // MARK: - Feature flags
 
     func testFeatureFlagsDefaultEmptyPayload() {
         XCTAssertTrue(LoopsFeatureFlags.default.payload().isEmpty)

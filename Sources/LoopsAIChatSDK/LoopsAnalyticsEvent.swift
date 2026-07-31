@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 
-/// The canonical analytics event (CONTRACT Part A, `schema_version "1.0"`),
+/// The canonical analytics event (`schema_version "1.0"`),
 /// received from the web runtime over the `trackEvent` bridge action and
 /// re-dispatched natively. On mobile the SDK **dictates the shape** (OPEN #2,
 /// resolved): `channel` is forced to `"ios"` and native context
@@ -16,8 +16,8 @@ public struct LoopsAnalyticsEvent {
     public let channel: String
     /// Discriminates canonical ecommerce events from customer-interaction events; defaults to `"ecommerce"`.
     public let kind: String
-    /// The full canonical payload (Part A envelope) with `channel` + native
-    /// context applied — ready for adapters and the host callback.
+    /// The full canonical event envelope with `channel` + native context
+    /// applied — ready for adapters and the host callback.
     public let payload: [String: Any]
 
     init?(bridgePayload: [String: Any], context: LoopsAnalyticsContext) {
@@ -74,7 +74,7 @@ public struct LoopsAnalyticsEvent {
     }
 }
 
-/// Native-only base context attached to every event (CONTRACT Part A / PLAN §5).
+/// Native-only base context attached to every canonical event.
 /// `app_version`/`device`/`os_version` are device facts the web can't know;
 /// the identity fields ride along when known.
 public struct LoopsAnalyticsContext {

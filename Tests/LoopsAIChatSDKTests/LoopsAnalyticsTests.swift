@@ -1,7 +1,7 @@
 import XCTest
 @testable import LoopsAIChatSDK
 
-/// Native analytics bridge tests (CONTRACT Part A, TASK-0015).
+/// Native analytics bridge tests (canonical event schema).
 final class LoopsAnalyticsTests: XCTestCase {
 
     private func context() -> LoopsAnalyticsContext {

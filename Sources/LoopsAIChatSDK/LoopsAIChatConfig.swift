@@ -1,6 +1,6 @@
 import Foundation
 
-/// Where the SDK loads the web runtime from (CONTRACT B.6 origin allowlist).
+/// Where the SDK loads the web runtime from (drives the bridge origin allowlist).
 public enum LoopsEnvironment: Sendable, Equatable {
     case production            // chat.loopsai.com
     case custom(URL)           // self-host / on-prem (host added to the allowlist)
@@ -81,7 +81,7 @@ public struct LoopsAIChatConfig: Sendable {
     }
 
     /// Builds the `mode=sdk` chat URL, re-injecting the natively-owned session
-    /// (`_lsuid` / `_lscid`) on every load (CONTRACT B.4).
+    /// (`_lsuid` / `_lscid`) on every load.
     ///
     /// When `fresh` is `true`, `_lscid` is omitted and `fresh=true` is added so
     /// the web runtime starts a new conversation and ignores any prior one
