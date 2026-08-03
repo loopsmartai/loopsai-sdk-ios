@@ -23,7 +23,7 @@ guidance) into any iOS app. The web runtime owns the conversation UI;
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/loopsmartai/loopsai-sdk-ios.git", from: "1.0.2")
+    .package(url: "https://github.com/loopsmartai/loopsai-sdk-ios.git", from: "1.0.3")
 ],
 targets: [
     .target(name: "YourApp", dependencies: [

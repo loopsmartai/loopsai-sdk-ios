@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Regional locale tags are normalized before reaching the runtime.** Hosts
+  naturally pass `Locale.current.identifier` (`tr_TR` / `tr-TR`); the web
+  runtime only matches the base language tag, so a regional value was ignored
+  and the chat fell back to the device language. The two spellings also split
+  the warm-engine cache into separate WebViews for the same language. The SDK
+  now sends the lowercased base tag and keys the warm engine on it.
+
 ### Added — server-controlled availability
 
 - **`LoopsAIChat.fetchAvailability(agentId:)`** — reports whether the agent is

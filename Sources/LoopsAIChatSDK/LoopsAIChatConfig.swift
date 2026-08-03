@@ -77,7 +77,19 @@ public struct LoopsAIChatConfig: Sendable {
     /// Identity of the warm-engine bucket: same agent + origin + locale reuses the
     /// same kept-alive `WKWebView`. Different agents never share a runtime.
     var webCacheKey: String {
-        "\(baseURL.absoluteString)|\(agentId)|\(locale ?? "")"
+        "\(baseURL.absoluteString)|\(agentId)|\(normalizedLocale ?? "")"
+    }
+
+    /// The base language tag the web runtime matches on. Hosts routinely pass
+    /// `Locale.current.identifier` (`tr_TR`), which the runtime would not
+    /// recognise — and an unnormalized value would also split the warm-engine
+    /// bucket between two spellings of the same language.
+    var normalizedLocale: String? {
+        guard let raw = locale?.trimmingCharacters(in: .whitespaces), !raw.isEmpty
+        else { return nil }
+        let parts = raw.split(whereSeparator: { $0 == "-" || $0 == "_" })
+        guard let base = parts.first else { return nil }
+        return String(base).lowercased()
     }
 
     /// Builds the `mode=sdk` chat URL, re-injecting the natively-owned session
@@ -106,7 +118,9 @@ public struct LoopsAIChatConfig: Sendable {
         } else if let conversationId {
             queryItems.append(URLQueryItem(name: "_lscid", value: conversationId))
         }
-        if let locale { queryItems.append(URLQueryItem(name: "locale", value: locale)) }
+        if let normalizedLocale {
+            queryItems.append(URLQueryItem(name: "locale", value: normalizedLocale))
+        }
 
         components.queryItems = queryItems
         return components.url!
