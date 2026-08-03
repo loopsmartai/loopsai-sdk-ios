@@ -5,7 +5,7 @@ import SafariServices
 open class LoopsAIChatViewController: UIViewController {
     public let config: LoopsAIChatConfig
 
-    /// Natively-owned anonymous session (CONTRACT B.4). Exposed so a host can
+    /// Natively-owned anonymous session. Exposed so a host can
     /// share one store across multiple chat presentations if desired.
     public let sessionStore: LoopsSessionStore
 
@@ -74,7 +74,7 @@ open class LoopsAIChatViewController: UIViewController {
     open override var preferredStatusBarStyle: UIStatusBarStyle { .default }
 
     /// On rotation / size-class change, tell the web runtime whether the layout is
-    /// compact (CONTRACT B.3 `mobileStateChange`). Uses the horizontal size class —
+    /// compact (`mobileStateChange`). Uses the horizontal size class —
     /// the correct iOS signal — rather than a raw width threshold (an iPhone in
     /// landscape is still a compact, "mobile" layout). The initial state is seeded
     /// in the load URL; this keeps the runtime in sync afterwards.
@@ -222,7 +222,7 @@ open class LoopsAIChatViewController: UIViewController {
 
     // MARK: - Session + load
 
-    /// Resolves the anon session natively (CONTRACT B.4), then loads the runtime
+    /// Resolves the anon session natively, then loads the runtime
     /// with `_lsuid` / `_lscid` injected. Falls back to the cached session (or
     /// none) if bootstrap fails — the web runtime can still self-bootstrap.
     private func bootstrapSessionThenLoad() {
@@ -271,13 +271,13 @@ open class LoopsAIChatViewController: UIViewController {
         bridge.send(.startVirtualTryOn, payload: ["product": product], to: webView)
     }
 
-    /// Try on the product currently quoted in the conversation (CONTRACT B.3).
+    /// Try on the product currently quoted in the conversation.
     public func startTryOnFromQuote() {
         guard let webView, isWebReady else { return }
         bridge.send(.startTryOnFromQuote, to: webView)
     }
 
-    /// Quote a specific product in the conversation (CONTRACT B.3 `quoteProduct`):
+    /// Quote a specific product in the conversation (`quoteProduct`):
     /// the runtime shows that product as a card **above the input** — the same
     /// "quoted product" UI the chat uses when referencing a product — so the user
     /// can ask their own question about it. No message is sent; the user types it.
@@ -297,8 +297,8 @@ open class LoopsAIChatViewController: UIViewController {
         bridge.send(.suggestSize, to: webView)
     }
 
-    /// Open the chat in AI search mode with a prefilled query (CONTRACT B.3
-    /// `searchEscalation`). Defaults to a **product search** — matching the web
+    /// Open the chat in AI search mode with a prefilled query
+    /// (`searchEscalation`). Defaults to a **product search** — matching the web
     /// embed's `openWithSearch`, which sends `isOnlySearchProducts: true` so the
     /// runtime returns product results rather than treating the query as an
     /// ordinary chat message. Pass `productsOnly: false` to escalate into a
@@ -314,8 +314,8 @@ open class LoopsAIChatViewController: UIViewController {
         )
     }
 
-    /// Sync a known customer into the conversation (CONTRACT B.3
-    /// `syncCustomerDetails`). The web runtime looks up the profile for
+    /// Sync a known customer into the conversation
+    /// (`syncCustomerDetails`). The web runtime looks up the profile for
     /// `customerId` and enriches the session. Use when your app already knows who
     /// the user is (e.g. after login) so chat / size / recs are personalized.
     public func syncCustomerDetails(customerId: String) {
@@ -323,7 +323,7 @@ open class LoopsAIChatViewController: UIViewController {
         bridge.send(.syncCustomerDetails, payload: ["customerId": customerId], to: webView)
     }
 
-    /// Match the chat typography to your app (CONTRACT B.3 `setWebsiteFont`).
+    /// Match the chat typography to your app (`setWebsiteFont`).
     /// - Parameter fontFamily: a CSS `font-family` value the web runtime applies.
     public func setWebsiteFont(_ fontFamily: String) {
         guard let webView, isWebReady else { return }
@@ -334,7 +334,7 @@ open class LoopsAIChatViewController: UIViewController {
     /// runtime with `fresh=true` so no prior conversation — neither the locally
     /// cached one nor the server's most-recent — is restored. The fresh
     /// conversation is persisted back natively once the web runtime reports it
-    /// (CONTRACT B.2 `persistSession`), so a later relaunch resumes *it*.
+    /// (`persistSession`), so a later relaunch resumes *it*.
     public func startNewConversation() {
         sessionStore.setConversationId(nil, for: config.agentId)
         startFreshOnNextLoad = true
@@ -343,7 +343,7 @@ open class LoopsAIChatViewController: UIViewController {
     }
 
     /// Set the analytics consent state from your app's consent management platform
-    /// (CONTRACT B.3 `setAnalyticsConsent`). The web runtime maps this to its A.4
+    /// (`setAnalyticsConsent`). The web runtime maps this to its own
     /// consent gate: `granted` lets analytics dispatch, `false` denies it (stops
     /// every adapter, including the always-on Loops sink). Call this whenever the
     /// user updates their consent; it is forward-compatible (older web runtimes
@@ -354,8 +354,8 @@ open class LoopsAIChatViewController: UIViewController {
         bridge.send(.setAnalyticsConsent, payload: ["granted": granted], to: webView)
     }
 
-    /// Clear the active product quote in the conversation (CONTRACT B.3
-    /// `clearProductQuote`). Pairs with the `didChangeProductQuote` delegate
+    /// Clear the active product quote in the conversation
+    /// (`clearProductQuote`). Pairs with the `didChangeProductQuote` delegate
     /// callback: when your app dismisses its native quote chip, call this so the
     /// web runtime drops the quote too.
     public func clearProductQuote() {
@@ -364,7 +364,7 @@ open class LoopsAIChatViewController: UIViewController {
     }
 
     /// Close any open web overlay — virtual try-on, size input, sidebars, drawers —
-    /// without unloading the WebView (CONTRACT B.3 `closeOverlays`). Wire this to a
+    /// without unloading the WebView (`closeOverlays`). Wire this to a
     /// back gesture / dismiss button so a system back closes the overlay first
     /// instead of tearing down the chat.
     public func closeOverlays() {
@@ -372,8 +372,8 @@ open class LoopsAIChatViewController: UIViewController {
         bridge.send(.closeOverlays, to: webView)
     }
 
-    /// Tell the web runtime the mobile/compact layout state changed (CONTRACT B.3
-    /// `mobileStateChange`). Called automatically on rotation / size-class change;
+    /// Tell the web runtime the mobile/compact layout state changed
+    /// (`mobileStateChange`). Called automatically on rotation / size-class change;
     /// the initial state is still seeded via the load URL.
     private func sendMobileStateChange(isMobile: Bool) {
         guard let webView, isWebReady else { return }
@@ -394,10 +394,10 @@ open class LoopsAIChatViewController: UIViewController {
         delegate?.loopsAIChatDidBecomeReady(self)
     }
 
-    /// The web runtime asked the host to refresh an auth token (CONTRACT B.2).
+    /// The web runtime asked the host to refresh an auth token.
     /// v1 launches are anon-only; with no `authProvider` this is a no-op.
     func handleTokenRefreshRequest(requestId: String?) {
-        // Reserved for the optional auth provider (PLAN open question #4).
+        // Reserved for the optional auth provider.
     }
 
     // MARK: - Outbound links
@@ -545,7 +545,7 @@ extension LoopsAIChatViewController: WKNavigationDelegate {
             return
         }
 
-        // Foreign link → open outside the WebView (CONTRACT B.6).
+        // Foreign link → open outside the WebView.
         handleOutboundURL(url)
         decisionHandler(.cancel)
     }
