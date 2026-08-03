@@ -27,6 +27,31 @@ final class LoopsAIChatConfigTests: XCTestCase {
         XCTAssertFalse(url.absoluteString.contains("locale="))
     }
 
+    func testChatURLNormalizesRegionalLocale() {
+        for raw in ["tr_TR", "tr-TR", "TR", " tr "] {
+            let config = LoopsAIChatConfig(agentId: "agent_123", locale: raw)
+            let url = config.chatURL(anonUserId: nil, conversationId: nil)
+            XCTAssertTrue(
+                url.absoluteString.contains("locale=tr"),
+                "expected locale=tr for \(raw)"
+            )
+            XCTAssertFalse(url.absoluteString.lowercased().contains("tr_tr"))
+            XCTAssertFalse(url.absoluteString.lowercased().contains("tr-tr"))
+        }
+    }
+
+    func testChatURLExcludesLocaleWhenBlank() {
+        let config = LoopsAIChatConfig(agentId: "agent_123", locale: "   ")
+        let url = config.chatURL(anonUserId: nil, conversationId: nil)
+        XCTAssertFalse(url.absoluteString.contains("locale="))
+    }
+
+    func testWebCacheKeyIgnoresLocaleSpelling() {
+        let regional = LoopsAIChatConfig(agentId: "agent_123", locale: "tr-TR")
+        let base = LoopsAIChatConfig(agentId: "agent_123", locale: "tr")
+        XCTAssertEqual(regional.webCacheKey, base.webCacheKey)
+    }
+
     func testChatURLInjectsSessionParams() {
         let config = LoopsAIChatConfig(agentId: "agent_123")
         let url = config.chatURL(anonUserId: "anon_42", conversationId: "cnv_7")

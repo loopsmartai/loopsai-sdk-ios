@@ -7,3 +7,7 @@ DerivedData/
 .netrc
 *.xcodeproj
 Package.resolved
+
+# Internal-only notes that must never reach the public consumer surface.
+# Kept out of git entirely, but Claude Code still reads it locally.
+/CLAUDE.md

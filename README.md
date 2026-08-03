@@ -9,14 +9,6 @@ that embeds the Loops AI chat experience (chat, virtual try-on, AI search, size
 guidance) into any iOS app. The web runtime owns the conversation UI;
 **native owns the session, routing, and analytics**. UIKit + SwiftUI.
 
-> 🔒 **Internal repository — source of truth.** This is the private development
-> repo (`loopsmartai/loopsai-sdk-ios-internal`). External consumers use the
-> public mirror: **[`loopsmartai/loopsai-sdk-ios`](https://github.com/loopsmartai/loopsai-sdk-ios)**.
-> All development happens here and is mirrored to public by replacing files.
-> Work through the `develop` branch — never push to `main` directly. See
-> [`AGENTS.md`](AGENTS.md) for the full internal/public workflow.
-> _(This block is stripped when mirroring to the public repo.)_
-
 ---
 
 ## Installation
@@ -24,18 +16,18 @@ guidance) into any iOS app. The web runtime owns the conversation UI;
 ### Swift Package Manager (Xcode)
 
 1. **File → Add Package Dependencies**
-2. Enter `https://github.com/loopsmartai/loopsai-sdk-ios-internal.git`
+2. Enter `https://github.com/loopsmartai/loopsai-sdk-ios.git`
 3. Add **`LoopsAIChatSDK`** to your target.
 
 ### Package.swift
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/loopsmartai/loopsai-sdk-ios-internal.git", from: "1.0.0")
+    .package(url: "https://github.com/loopsmartai/loopsai-sdk-ios.git", from: "1.0.3")
 ],
 targets: [
     .target(name: "YourApp", dependencies: [
-        .product(name: "LoopsAIChatSDK", package: "loopsai-sdk-ios-internal")
+        .product(name: "LoopsAIChatSDK", package: "loopsai-sdk-ios")
     ])
 ]
 ```

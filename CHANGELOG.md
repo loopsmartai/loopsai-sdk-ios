@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Regional locale tags are normalized before reaching the runtime.** Hosts
+  naturally pass `Locale.current.identifier` (`tr_TR` / `tr-TR`); the web
+  runtime only matches the base language tag, so a regional value was ignored
+  and the chat fell back to the device language. The two spellings also split
+  the warm-engine cache into separate WebViews for the same language. The SDK
+  now sends the lowercased base tag and keys the warm engine on it.
+
 ### Added — server-controlled availability
 
 - **`LoopsAIChat.fetchAvailability(agentId:)`** — reports whether the agent is
@@ -38,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **v2 bridge** (TASK-0014): typed `nativeAction` envelope (`protocolVersion 1`),
+- **v2 bridge**: typed `nativeAction` envelope (`protocolVersion 1`),
   full web→native / native→web action allowlists, native session ownership
   (`_lsuid`/`_lscid` re-injection), `ready` handshake, and host
   callbacks (`onReady`/`onMessage`/`onResponding`/`onProductQuoteChanged`/
@@ -48,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so the runtime starts a brand-new conversation instead of resuming the last one
   (local cache *and* the server's most-recent). Fixes entry points like "Ask AI"
   that should feel fresh, and gives hosts a real "new chat" action.
-- **Flow modes** (TASK-0016): `openWithSearch(_:productsOnly:)`,
+- **Flow modes**: `openWithSearch(_:productsOnly:)`,
   `startTryOnFromQuote()`, `openVoiceMode()`, `syncCustomerDetails(customerId:)`,
   `setWebsiteFont(_:)`; `LoopsFeatureFlags` forwarded via `initConfig`;
   `WKUIDelegate` microphone-capture grant for voice (host must add
@@ -57,8 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `closeOverlays()` (close a web overlay — VTO/size/sidebar — without unloading the
   WebView, e.g. on a back gesture), and automatic `mobileStateChange` on
   rotation/size-class change (compact = `horizontalSizeClass == .compact`). Closes
-  the remaining gap vs the web embed's host→iframe action set (CONTRACT B.3).
-- **Native analytics** (TASK-0015): `LoopsAnalyticsEvent` (canonical, forced
+  the remaining gap vs the web embed's host→iframe action set.
+- **Native analytics**: `LoopsAnalyticsEvent` (canonical, forced
   `channel:"mobile_app"`), `LoopsAnalyticsDispatcher` (always-on `LoopsSinkAdapter`
   + optional customer adapter), `HttpWebhookAdapter`, `BlockAnalyticsAdapter`
   (decouples Firebase/Mixpanel/Segment), `LoopsAnalyticsConfig`.
