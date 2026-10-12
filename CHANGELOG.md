@@ -35,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`history`, `newChat`, `favorites`, `fittingRoom`, `cart`) appear on the left
   and right. `nil` keeps the default layout.
 
+### Fixed
+
+- **`initConfig` / `initContext` are resent for every loaded document**, including
+  reloads, Retry and `startNewConversation()`.
+
 ### Changed
 
 - **Analytics channel is now `"ios"`** (was `"mobile_app"`): canonical events are
