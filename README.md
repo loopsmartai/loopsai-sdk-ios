@@ -80,6 +80,8 @@ LoopsAIChat.present(from: self, config: config)
 | `analytics` | `LoopsAnalyticsConfig` | `.default` | Sink + customer analytics destinations. |
 | `locale` | `String?` | `nil` | Language code, e.g. `"en"`, `"tr"`. |
 | `showCloseButton` | `Bool` | `true` | Native close button (top-right). |
+| `closeButtonSlotWidth` | `CGFloat` | `36` | Width (pt) the chat header and panels keep free for the close button. |
+| `headerLayout` | `LoopsHeaderLayout?` | `nil` | Header actions per side, e.g. `LoopsHeaderLayout(left: [.history], right: [.favorites])`. `nil` keeps the default. |
 
 ### Environments
 

@@ -52,6 +52,19 @@ final class LoopsAIChatConfigTests: XCTestCase {
         XCTAssertEqual(regional.webCacheKey, base.webCacheKey)
     }
 
+    func testWebCacheKeySeparatesHeaderSettings() {
+        let base = LoopsAIChatConfig(agentId: "agent_123")
+        let layout = LoopsHeaderLayout(left: [.history], right: [.favorites])
+        XCTAssertNotEqual(base.webCacheKey, LoopsAIChatConfig(agentId: "agent_123", showCloseButton: false).webCacheKey)
+        XCTAssertNotEqual(base.webCacheKey, LoopsAIChatConfig(agentId: "agent_123", closeButtonSlotWidth: 48).webCacheKey)
+        XCTAssertNotEqual(base.webCacheKey, LoopsAIChatConfig(agentId: "agent_123", headerLayout: layout).webCacheKey)
+    }
+
+    func testCloseButtonSlotWidthRejectsInvalidValues() {
+        XCTAssertEqual(LoopsAIChatConfig(agentId: "agent_123", closeButtonSlotWidth: -10).closeButtonSlotWidth, 0)
+        XCTAssertEqual(LoopsAIChatConfig(agentId: "agent_123", closeButtonSlotWidth: .nan).closeButtonSlotWidth, 36)
+    }
+
     func testChatURLInjectsSessionParams() {
         let config = LoopsAIChatConfig(agentId: "agent_123")
         let url = config.chatURL(anonUserId: "anon_42", conversationId: "cnv_7")

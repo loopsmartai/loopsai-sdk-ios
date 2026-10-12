@@ -13,12 +13,32 @@ public enum LoopsEnvironment: Sendable, Equatable {
     }
 }
 
+public enum LoopsHeaderAction: String, Sendable, CaseIterable {
+    case history, newChat, favorites, fittingRoom, cart
+}
+
+public struct LoopsHeaderLayout: Sendable, Equatable {
+    public let left: [LoopsHeaderAction]
+    public let right: [LoopsHeaderAction]
+
+    public init(left: [LoopsHeaderAction] = [], right: [LoopsHeaderAction] = []) {
+        self.left = left
+        self.right = right
+    }
+
+    var payload: [String: [String]] {
+        ["left": left.map(\.rawValue), "right": right.map(\.rawValue)]
+    }
+}
+
 public struct LoopsAIChatConfig: Sendable {
     public let agentId: String
     public let environment: LoopsEnvironment
     public let locale: String?
     public let initialContext: LoopsAIChatContext?
     public let showCloseButton: Bool
+    public let closeButtonSlotWidth: CGFloat
+    public let headerLayout: LoopsHeaderLayout?
     public let features: LoopsFeatureFlags
     public let analytics: LoopsAnalyticsConfig
 
@@ -51,6 +71,8 @@ public struct LoopsAIChatConfig: Sendable {
         analytics: LoopsAnalyticsConfig = .default,
         locale: String? = nil,
         showCloseButton: Bool = true,
+        closeButtonSlotWidth: CGFloat = 36,
+        headerLayout: LoopsHeaderLayout? = nil,
         startFresh: Bool = false,
         keepAliveEnabled: Bool = true,
         developmentMode: Bool = false,
@@ -63,6 +85,8 @@ public struct LoopsAIChatConfig: Sendable {
         self.analytics = analytics
         self.locale = locale
         self.showCloseButton = showCloseButton
+        self.closeButtonSlotWidth = closeButtonSlotWidth.isFinite ? max(0, closeButtonSlotWidth) : 36
+        self.headerLayout = headerLayout
         self.startFresh = startFresh
         self.keepAliveEnabled = keepAliveEnabled
         self.developmentMode = developmentMode
@@ -74,10 +98,16 @@ public struct LoopsAIChatConfig: Sendable {
     /// Host the bridge must allow in addition to the canonical Loops hosts.
     var baseHost: String? { baseURL.host }
 
-    /// Identity of the warm-engine bucket: same agent + origin + locale reuses the
-    /// same kept-alive `WKWebView`. Different agents never share a runtime.
+    /// Identity of the warm-engine bucket: same agent + origin + locale + header
+    /// settings reuses the same kept-alive `WKWebView`. Different agents never share a runtime.
     var webCacheKey: String {
-        "\(baseURL.absoluteString)|\(agentId)|\(normalizedLocale ?? "")"
+        "\(baseURL.absoluteString)|\(agentId)|\(normalizedLocale ?? "")|\(headerCacheKey)"
+    }
+
+    private var headerCacheKey: String {
+        let slot = showCloseButton ? "\(closeButtonSlotWidth)" : "none"
+        let layout = headerLayout.map { "\($0.left.map(\.rawValue))\($0.right.map(\.rawValue))" } ?? ""
+        return "\(slot)|\(layout)"
     }
 
     /// The base language tag the web runtime matches on. Hosts routinely pass

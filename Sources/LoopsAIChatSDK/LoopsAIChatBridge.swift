@@ -141,9 +141,8 @@ final class LoopsAIChatBridge: NSObject, WKScriptMessageHandler {
         // Merge any explicit flow-mode flag overrides; absent flags keep the
         // server-resolved agent config.
         var cfg: [String: Any] = ["alwaysShowCloseButton": false]
-        // Reserve right-edge header space for the native close button (32pt button +
-        // 16pt trailing inset + gap) so web content clears the overlaid control.
-        if config.showCloseButton { cfg["headerActionSlotWidthPx"] = 56 }
+        if config.showCloseButton { cfg["headerActionSlotWidthPx"] = config.closeButtonSlotWidth }
+        if let headerLayout = config.headerLayout { cfg["headerActions"] = headerLayout.payload }
         for (key, value) in config.features.payload() { cfg[key] = value }
         // Preview overrides: load the runtime even when the web channel is inactive
         // (mirrors the web widget's designMode / developmentMode). Only sent when on.

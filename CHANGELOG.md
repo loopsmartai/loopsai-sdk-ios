@@ -26,6 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`developmentMode` / `designMode`** config flags — load the runtime even when
   the channel is inactive (staging / QA / design preview).
 
+### Added
+
+- **`closeButtonSlotWidth`** config (default `36` pt): width the chat header and
+  panels keep free at the trailing edge for the native close button. Panels
+  show a leading dismiss chevron instead of their own close button.
+- **`headerLayout`** config (`LoopsHeaderLayout`): choose which header actions
+  (`history`, `newChat`, `favorites`, `fittingRoom`, `cart`) appear on the left
+  and right. `nil` keeps the default layout.
+
 ### Changed
 
 - **Analytics channel is now `"ios"`** (was `"mobile_app"`): canonical events are

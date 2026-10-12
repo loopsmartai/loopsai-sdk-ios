@@ -26,7 +26,9 @@ final class LoopsChatEngine {
 
     /// Mirrors the web `ready` handshake; persists so a warm reuse can fire
     /// `didBecomeReady` immediately without a reload.
-    var isWebReady = false
+    var isWebReady = false {
+        didSet { if !isWebReady { didSendInit = false } }
+    }
     /// One-shot guard for the initial `initConfig` / `initContext` push.
     private var didSendInit = false
     /// The URL currently loaded — lets a reuse decide whether a reload is needed.

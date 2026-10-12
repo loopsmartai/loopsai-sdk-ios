@@ -84,7 +84,7 @@ final class LoopsAIBridgeTests: XCTestCase {
     }
 
     func testFeatureFlagsPayloadOnlyIncludesSetFlags() {
-        let flags = LoopsFeatureFlags(searchEscalationEnabled: true, virtualTryOnEnabled: false)
+        let flags = LoopsFeatureFlags(virtualTryOnEnabled: false, searchEscalationEnabled: true)
         let payload = flags.payload()
         XCTAssertEqual(payload["searchEscalationEnabled"] as? Bool, true)
         XCTAssertEqual(payload["virtualTryOnEnabled"] as? Bool, false)
