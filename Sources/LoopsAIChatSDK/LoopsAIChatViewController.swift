@@ -550,10 +550,6 @@ extension LoopsAIChatViewController: WKNavigationDelegate {
         decisionHandler(.cancel)
     }
 
-    public func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        isWebReady = false
-    }
-
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         // Visual readiness only — the bridge-level `ready` action drives init.
         activityIndicator.stopAnimating()

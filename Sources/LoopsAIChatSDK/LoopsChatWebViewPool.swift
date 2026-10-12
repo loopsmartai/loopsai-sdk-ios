@@ -43,6 +43,8 @@ final class LoopsChatEngine {
     /// Reusable when nothing is presenting it.
     var isAvailable: Bool { presenter == nil }
 
+    private var loadingObservation: NSKeyValueObservation?
+
     init(
         webView: WKWebView,
         bridge: LoopsAIChatBridge,
@@ -55,6 +57,10 @@ final class LoopsChatEngine {
         self.config = config
         self.sessionStore = sessionStore
         self.analyticsDispatcher = analyticsDispatcher
+        loadingObservation = webView.observe(\.isLoading, options: [.new]) { [weak self] webView, _ in
+            guard webView.isLoading else { return }
+            DispatchQueue.main.async { self?.isWebReady = false }
+        }
     }
 
     // MARK: - Persistent web → native handling (controller-independent)
