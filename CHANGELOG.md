@@ -7,14 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
+### Added
 
-- **Regional locale tags are normalized before reaching the runtime.** Hosts
-  naturally pass `Locale.current.identifier` (`tr_TR` / `tr-TR`); the web
-  runtime only matches the base language tag, so a regional value was ignored
-  and the chat fell back to the device language. The two spellings also split
-  the warm-engine cache into separate WebViews for the same language. The SDK
-  now sends the lowercased base tag and keys the warm engine on it.
+- Added optional widgetVersion, previewToken, and agentVersion configuration, plus developmentMode URL selection.
+- Isolated warm runtimes by version, preview token, and development mode.
 
 ### Added — server-controlled availability
 
@@ -25,6 +21,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the dashboard, without an app update. Fails open on network errors.
 - **`developmentMode` / `designMode`** config flags — load the runtime even when
   the channel is inactive (staging / QA / design preview).
+- **Host-managed widget visibility** — the SDK now drives the web runtime's
+  visible state itself (`hostManagedVisibility=true` on the load URL plus a new
+  native→web `widgetVisibility` bridge action sent on present/dismiss), so
+  `loops_ai_widget_opened` analytics fire on every open — including warm
+  keep-alive reopens that previously emitted nothing.
+- **Queued `openWithSearch`** — calls made before the web runtime is ready are
+  no longer dropped: the last query is stored and flushed as `searchEscalation`
+  when the engine becomes ready.
+
+### Added
+
+- **`closeButtonSlotWidth`** config (default `36` pt): width the chat header and
+  panels keep free at the trailing edge for the native close button. Panels
+  show a leading dismiss chevron instead of their own close button.
+- **`headerLayout`** config (`LoopsHeaderLayout`): choose which header actions
+  (`history`, `newChat`, `favorites`, `fittingRoom`, `cart`) appear on the left
+  and right. `nil` keeps the default layout.
+
+### Fixed
+
+- **`initConfig` / `initContext` are resent for every loaded document**, including
+  reloads, Retry and `startNewConversation()`.
 
 ### Changed
 
@@ -36,6 +54,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Production-only environment**: the SDK now targets `chat.loopsai.com`
   everywhere. `LoopsEnvironment.test` was removed; `.production` and `.custom(URL)`
   remain. Keeps the iOS and Android SDKs in lockstep.
+
+### Fixed
+
+- `loops_ai_widget_opened` was attributed `open_source: "bubble"` even when the
+  chat was opened via `openWithSearch`; the search escalation now reaches the
+  runtime before `visible=true` so the open is attributed `search_escalation`.
+- `loops_ai_search_clicked` could be lost when `openWithSearch` was called
+  before the web `ready` handshake (the call was silently dropped).
 
 ### Removed
 
@@ -55,7 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **New-conversation control**: `LoopsAIChatViewController.startNewConversation()`
   and `LoopsAIChatConfig(startFresh:)`. Loads with `fresh=true` and omits `_lscid`
   so the runtime starts a brand-new conversation instead of resuming the last one
-  (local cache *and* the server's most-recent). Fixes entry points like "Ask AI"
+  (local cache _and_ the server's most-recent). Fixes entry points like "Ask AI"
   that should feel fresh, and gives hosts a real "new chat" action.
 - **Flow modes**: `openWithSearch(_:productsOnly:)`,
   `startTryOnFromQuote()`, `openVoiceMode()`, `syncCustomerDetails(customerId:)`,
@@ -69,7 +95,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the remaining gap vs the web embed's host→iframe action set.
 - **Native analytics**: `LoopsAnalyticsEvent` (canonical, forced
   `channel:"mobile_app"`), `LoopsAnalyticsDispatcher` (always-on `LoopsSinkAdapter`
-  + optional customer adapter), `HttpWebhookAdapter`, `BlockAnalyticsAdapter`
+  with an optional customer adapter), `HttpWebhookAdapter`, `BlockAnalyticsAdapter`
   (decouples Firebase/Mixpanel/Segment), `LoopsAnalyticsConfig`.
 - **Host-emitted native events**: public `LoopsAnalyticsEvent(event:params:context:)`
   initializer + public `LoopsAnalyticsDispatcher.dispatch(_:)`, so a host app can
