@@ -8,6 +8,7 @@ DerivedData/
 *.xcodeproj
 Package.resolved
 
-# Internal-only notes that must never reach the public consumer surface.
-# Kept out of git entirely, but Claude Code still reads it locally.
+# Internal-only notes that must never reach the public mirror (see AGENTS.md).
+# Kept out of git entirely so a file-replace mirror can't carry them over.
+/README.internal.md
 /CLAUDE.md
