@@ -27,9 +27,14 @@ open class LoopsAIChatViewController: UIViewController {
     /// One-shot: when set, the next load starts a fresh conversation (skips
     /// `_lscid`, passes `fresh=true`). Seeded from `config.startFresh`.
     private lazy var startFreshOnNextLoad: Bool = config.startFresh
+    private var pendingSearch: (query: String, productsOnly: Bool)?
+    private var hasAppeared = false
+    private var reportedWidgetVisible = false
+    private var isNotifyingReady = false
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
     private var errorView: UIView?
     private var closeButton: UIButton?
+    private var closeButtonDim: UIView?
 
     public init(
         config: LoopsAIChatConfig,
@@ -69,6 +74,12 @@ open class LoopsAIChatViewController: UIViewController {
             }
             bootstrapSessionThenLoad()
         }
+    }
+
+    open override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        hasAppeared = true
+        reportWidgetVisibleIfReady()
     }
 
     open override var preferredStatusBarStyle: UIStatusBarStyle { .default }
@@ -214,10 +225,46 @@ open class LoopsAIChatViewController: UIViewController {
             button.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 12),
             button.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -16)
         ])
+
+        let dim = UIView()
+        dim.translatesAutoresizingMaskIntoConstraints = false
+        dim.backgroundColor = .black
+        dim.layer.cornerRadius = 16
+        dim.isUserInteractionEnabled = false
+        dim.alpha = 0
+        button.addSubview(dim)
+        closeButtonDim = dim
+
+        NSLayoutConstraint.activate([
+            dim.topAnchor.constraint(equalTo: button.topAnchor),
+            dim.leadingAnchor.constraint(equalTo: button.leadingAnchor),
+            dim.trailingAnchor.constraint(equalTo: button.trailingAnchor),
+            dim.bottomAnchor.constraint(equalTo: button.bottomAnchor)
+        ])
+
+        webOverlayStateDidChange(animated: false)
     }
 
     @objc private func closeButtonTapped() {
-        delegate?.loopsAIChatDidRequestClose(self)
+        if engine.webOverlayCount > 0 {
+            closeOverlays()
+        } else {
+            delegate?.loopsAIChatDidRequestClose(self)
+        }
+    }
+
+    func webOverlayStateDidChange(animated: Bool) {
+        updateCloseButtonDim(animated: animated)
+    }
+
+    private func updateCloseButtonDim(animated: Bool) {
+        let dimmed = engine.webOverlayCount > 0
+        closeButton?.accessibilityHint = dimmed ? "Closes the open panel" : "Closes the chat"
+        let target: CGFloat = dimmed ? 0.4 : 0
+        guard closeButtonDim?.alpha != target else { return }
+        UIView.animate(withDuration: animated ? 0.2 : 0) {
+            self.closeButtonDim?.alpha = target
+        }
     }
 
     // MARK: - Session + load
@@ -239,6 +286,7 @@ open class LoopsAIChatViewController: UIViewController {
     }
 
     private func loadChat() {
+        reportedWidgetVisible = false
         removeErrorView()
         activityIndicator.startAnimating()
         // `startFreshOnNextLoad` is one-shot: consume it so a later reload (e.g.
@@ -306,7 +354,10 @@ open class LoopsAIChatViewController: UIViewController {
     /// - Parameter productsOnly: `true` (default) for AI product search; `false`
     ///   to escalate the query into the conversation.
     public func openWithSearch(_ query: String, productsOnly: Bool = true) {
-        guard let webView, isWebReady else { return }
+        guard let webView, isWebReady else {
+            pendingSearch = (query, productsOnly)
+            return
+        }
         bridge.send(
             .searchEscalation,
             payload: ["query": query, "isOnlySearchProducts": productsOnly],
@@ -380,7 +431,28 @@ open class LoopsAIChatViewController: UIViewController {
         bridge.send(.mobileStateChange, payload: ["isMobile": isMobile], to: webView)
     }
 
+    private func sendWidgetVisibility(_ visible: Bool) {
+        guard let webView, isWebReady, engine?.presenter === self,
+              reportedWidgetVisible != visible else { return }
+        reportedWidgetVisible = visible
+        bridge.send(.widgetVisibility, payload: ["visible": visible], to: webView)
+    }
+
+    private func reportWidgetVisibleIfReady() {
+        guard hasAppeared, !isNotifyingReady else { return }
+        var node: UIViewController? = self
+        while let current = node {
+            if current.isBeingDismissed || current.isMovingFromParent { return }
+            node = current.parent
+        }
+        sendWidgetVisibility(true)
+    }
+
     // MARK: - Engine callbacks (web → native)
+
+    func engineDidBeginLoading() {
+        reportedWidgetVisible = false
+    }
 
     /// The engine reached `ready` (it already pushed config/context). Reveal the
     /// WebView and notify the host. `ready`/`persistSession`/`trackEvent` are now
@@ -391,7 +463,18 @@ open class LoopsAIChatViewController: UIViewController {
             self.webView?.alpha = 1
             self.closeButton?.alpha = 1
         }
+        if let pending = pendingSearch, let webView {
+            pendingSearch = nil
+            bridge.send(
+                .searchEscalation,
+                payload: ["query": pending.query, "isOnlySearchProducts": pending.productsOnly],
+                to: webView
+            )
+        }
+        isNotifyingReady = true
         delegate?.loopsAIChatDidBecomeReady(self)
+        isNotifyingReady = false
+        reportWidgetVisibleIfReady()
     }
 
     /// The web runtime asked the host to refresh an auth token.
@@ -480,7 +563,10 @@ open class LoopsAIChatViewController: UIViewController {
     /// parent removal guarantees the engine becomes reusable for the next open.
     open override func willMove(toParent parent: UIViewController?) {
         super.willMove(toParent: parent)
-        if parent == nil { teardownEngine() }
+        if parent == nil {
+            sendWidgetVisibility(false)
+            teardownEngine()
+        }
     }
 
     /// When this controller is actually leaving the screen (dismissed or popped —
@@ -490,11 +576,23 @@ open class LoopsAIChatViewController: UIViewController {
     /// even if neither this nor `willMove` fires.)
     open override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-        guard isBeingDismissed || isMovingFromParent else { return }
+        hasAppeared = false
+        sendWidgetVisibility(false)
+        var node: UIViewController? = self
+        var dismissing = false
+        while let current = node {
+            if current.isBeingDismissed || current.isMovingFromParent {
+                dismissing = true
+                break
+            }
+            node = current.parent
+        }
+        guard dismissing else { return }
         teardownEngine()
     }
 
     private func teardownEngine() {
+        hasAppeared = false
         guard let engine else { return }
         // If a newer presentation already adopted this engine, leave it untouched —
         // detaching its WebView or clearing its presenter would break that one.

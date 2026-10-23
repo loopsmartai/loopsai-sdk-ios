@@ -53,6 +53,7 @@ enum LoopsAIBridgeProtocol {
         case clearProductQuote       // clear the active quote chip
         case closeOverlays           // dispatch loopsai:close-overlays in the runtime
         case mobileStateChange       // rotation / size-class change → re-evaluate layout
+        case widgetVisibility
     }
 }
 
