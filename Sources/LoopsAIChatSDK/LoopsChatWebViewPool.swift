@@ -26,7 +26,14 @@ final class LoopsChatEngine {
 
     /// Mirrors the web `ready` handshake; persists so a warm reuse can fire
     /// `didBecomeReady` immediately without a reload.
-    var isWebReady = false
+    var isWebReady = false {
+        didSet {
+            if !isWebReady {
+                didSendInit = false
+                presenter?.engineDidBeginLoading()
+            }
+        }
+    }
     /// One-shot guard for the initial `initConfig` / `initContext` push.
     private var didSendInit = false
     /// The URL currently loaded — lets a reuse decide whether a reload is needed.
@@ -41,6 +48,10 @@ final class LoopsChatEngine {
     /// Reusable when nothing is presenting it.
     var isAvailable: Bool { presenter == nil }
 
+    private(set) var webOverlayCount = 0
+
+    private var loadingObservation: NSKeyValueObservation?
+
     init(
         webView: WKWebView,
         bridge: LoopsAIChatBridge,
@@ -53,6 +64,23 @@ final class LoopsChatEngine {
         self.config = config
         self.sessionStore = sessionStore
         self.analyticsDispatcher = analyticsDispatcher
+        loadingObservation = webView.observe(\.isLoading, options: [.new]) { [weak self] webView, _ in
+            guard webView.isLoading else { return }
+            DispatchQueue.main.async {
+                self?.isWebReady = false
+                self?.resetWebOverlays()
+            }
+        }
+    }
+
+    func webOverlayDidChange(opened: Bool) {
+        webOverlayCount = max(0, webOverlayCount + (opened ? 1 : -1))
+        presenter?.webOverlayStateDidChange(animated: true)
+    }
+
+    func resetWebOverlays() {
+        webOverlayCount = 0
+        presenter?.webOverlayStateDidChange(animated: false)
     }
 
     // MARK: - Persistent web → native handling (controller-independent)
